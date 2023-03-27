@@ -1,9 +1,7 @@
-import React from 'react';
-import {useDispatch, useSelector} from "react-redux";
-import {store} from "../features/store";
-import CoinType from "../features/coin/CoinType";
-import {updateCoins, updateStatus} from "../features/coin/coinSlice";
-import fetchCoins from "../features/coin/coinAPI";
+import React, {useEffect} from 'react';
+import {useDispatch} from "react-redux";
+import {Coin as CoinType} from "../types/types";
+import fetchCoins from "../api/fetchAPI";
 import {
     StyleSheet,
     ActivityIndicator,
@@ -11,16 +9,29 @@ import {
     View,
     FlatList,
 } from 'react-native';
-import Coin from "../features/coin/Coin";
+import Coin from "./Coin";
+import {useTypedSelector} from "../hooks/useTypeSelector";
+import {UPDATE_COINS, UPDATE_SINGLE_COIN, UPDATE_STATUS} from "../redux/actions";
 export default function CoinContainer() {
+    useEffect(() => {
+        getInitialCoins();
+    },[])
     const dispatch = useDispatch();
-    const status = useSelector((state: ReturnType<typeof store.getState>) => state.coin.status);
-    const coins = useSelector((state: ReturnType<typeof store.getState>) => state.coin.coins);
-    getInitialCoins(); //TODO: useEffect()
-    // const ws = new WebSocket('wss://nbstream.binance.com/lvt/stream');
-    // ws.onmessage = (e) => {
-    //     console.log(e.data)
-    // } TODO: use the grabDataFromResponse to update coins array using websocket
+    const status = useTypedSelector((state) => state.status);
+    const coins = useTypedSelector((state) => state.coins);
+    const ws = new WebSocket('wss://streamer.cryptocompare.com/v2?api_key=f45c4cfd8c9bdc6f2fe459e4027a4d66e0fdeaba2cd1752547742472b1aa18aa');
+    ws.onopen = () => {
+        ws.send(JSON.stringify({
+            "action": "SubAdd",
+            "subs": ["2~Coinbase~BTC~USD","2~Coinbase~ETH~USD"]
+        }));
+    };
+    ws.onmessage = (e) => {
+        let data = JSON.parse(e.data)
+        if (data.TYPE === '2'){
+            dispatch({type: UPDATE_SINGLE_COIN, payload: data});
+        }
+    }
     const grabDataFromResponse = (data: any) :CoinType[] => {
         let newArray: CoinType[] = [];
         data.map((coin:any) => {
@@ -33,14 +44,17 @@ export default function CoinContainer() {
         return newArray;
     }
     async function getInitialCoins() {
-        const res = await fetchCoins();
-        if (res.status === 200) {
-            dispatch(updateCoins(grabDataFromResponse(res.data)))
-            dispatch(updateStatus('idle'));
+        try {
+            const res = await fetchCoins();
+            if (res.status === 200) {
+                dispatch({type: UPDATE_STATUS, payload: 'idle'});
+                dispatch({type: UPDATE_COINS, payload: grabDataFromResponse(res.data)});
+            } else dispatch({type: UPDATE_STATUS, payload: 'failed'});
+        }catch (e) {
+            console.log(e);
+            dispatch({type: UPDATE_STATUS, payload: 'failed'})
         }
-        else dispatch(updateStatus('failed'));
     }
-    //TODO: make styles inline
     return (
         status === "loading" ? (
             <View style={styles.coinContainer}>
@@ -66,11 +80,8 @@ export default function CoinContainer() {
 const styles = StyleSheet.create({
     coinContainer: {
         flex: 1,
-        // backgroundColor: "#FFF",
-        // flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        // flexWrap: 'wrap',
     },
     coinContainerFailed: {
         backgroundColor: "red",

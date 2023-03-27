@@ -1,0 +1,3 @@
+export const UPDATE_COINS = "UPDATE_COINS";
+export const UPDATE_STATUS = "UPDATE_STATUS";
+export const UPDATE_SINGLE_COIN = "UPDATE_SINGLE_COIN";

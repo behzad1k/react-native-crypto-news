@@ -1,5 +1,7 @@
-
 import React from 'react';
+import store from './src/redux/store';
+import { Provider } from 'react-redux';
+
 import {
   SafeAreaView,
   StyleSheet,
@@ -15,7 +17,7 @@ import {
   DebugInstructions,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
-import CoinContainer from "./src/components/CoinContainer";
+import CoinContainer from "./src/screens/CoinContainer";
 
 const App = () => {
   return (

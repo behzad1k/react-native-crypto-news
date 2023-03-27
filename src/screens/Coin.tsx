@@ -1,20 +1,25 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {
     StyleSheet,
     Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+    Animated,
 } from 'react-native';
-import CoinType from "./CoinType";
-// import {useAppDispatch, useAppSelector} from '/src/features';
+import {Coin as CoinType} from "../types/types";
 interface PropChildren {
     coin: CoinType
 }
 export default function Coin(props:PropChildren) {
-    // const dispatch = useAppDispatch();
+    const statusDiffer = () => {
+        switch (props.coin.statusDiffer) {
+            case ("UP"):
+                return styles.up;
+            case ("DOWN"):
+                return styles.down;
+            default: return ;
+        }
+    }
     return (
-        <View style={styles.card}>
+        <Animated.View style={[styles.card , statusDiffer()]}>
             <Text style={styles.symbol}>
                 {props.coin.symbol}
             </Text>
@@ -24,7 +29,7 @@ export default function Coin(props:PropChildren) {
             <Text style={styles.price}>
                 {props.coin.price}
             </Text>
-        </View>
+        </Animated.View>
     );
 }
 
@@ -38,6 +43,12 @@ const styles = StyleSheet.create({
         width: 120,
         alignItems:"center",
         backgroundColor: "#4b4b4b"
+    },
+    up: {
+        backgroundColor: "#08ff00"
+    },
+    down: {
+        backgroundColor: "#f10000"
     },
     name: {
         color: "#FFF",
